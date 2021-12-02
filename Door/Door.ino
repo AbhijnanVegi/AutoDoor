@@ -1,9 +1,11 @@
-
 #include <WiFi.h>
 #include <WebServer.h>
 #include <HTTPClient.h>
-// #include "secrets.h"
-
+char *SSID = "prerak";
+char *PASS = "prerak@116";
+#define cse_ip "192.168.1.12"
+#define cse_port "8080"
+#include "BluetoothSerial.h"
 #include <Servo.h>
 #define trigger 33
 #define echo 32
@@ -16,8 +18,8 @@ long distance;
 bool sense_motion = 0;
 bool com_closer = 0;
 int calibrationTime = 60;
-
-
+char inputfrombluetooth = 0;
+BluetoothSerial SerialBT;
 
 
 WebServer server(80);
@@ -49,6 +51,7 @@ long getDistance(long time_taken)
 void setup()
 {
   Serial.begin(9600);
+    SerialBT.begin("ESP32test"); //Bluetooth device name
   myservo.attach(Spin);
     pinMode(echo, INPUT);
     pinMode(trigger, OUTPUT);
@@ -62,7 +65,6 @@ void setup()
   } 
   Serial.println(" done"); 
   Serial.println("SENSOR ACTIVE"); delay(50); 
-    Serial.begin(9600);
     myservo.write(0);
   
   // Connect to WiFi
@@ -85,14 +87,15 @@ void setup()
     page += "<html>\r\n";
     page += "<body>\r\n";
     page += "<h1>Welcome to the Door Control!</h1>\r\n";
-    page += "<button onclick='open()'>Open</button>\r\n";
-    page += "<script>\r\n";
+    page += "<button onclick='opendoor()'>Open</button>\r\n";
+    page += "<script type=\"application/javascript\">\r\n";
     page += "function sendReq(url) {\r\n";
     page += "var xhttp = new XMLHttpRequest();\r\n";
+    page += "xhttp.onreadystatechange = function(){};\r\n";
     page += "xhttp.open('GET', url, true);\r\n";
     page += "xhttp.send();\r\n";
     page += "}\r\n";
-    page += "function open() {\r\n";
+    page += "function opendoor() {\r\n";
     page += "sendReq('/open');\r\n";
     page += "}\r\n";
     page += "</script>\r\n";
@@ -101,8 +104,9 @@ void setup()
   });
 
   server.on("/open", []() {
+    server.send(200);
     myservo.write(90);
-    delay(1000);
+    delay(5000);
     myservo.write(0);
   });
   
@@ -165,6 +169,7 @@ bool read_ultrasonic(int readings[])
 void loop()
 {
   server.handleClient();
+   inputfrombluetooth = SerialBT.read();
     sense_motion = digitalRead(PIR);
     int readings[5] = {0};
   
@@ -185,7 +190,16 @@ void loop()
       Serial.println("No motion detected");
         myservo.write(0);
     }
-    
-
+    if(inputfrombluetooth == '0')
+    {
+      Serial.println("Button pressed. Opening door...");
+      myservo.write(90);
+    }
+    else if(inputfrombluetooth == '1')
+    {
+      Serial.println("Button pressed. Closing door...");
+      myservo.write(0);
+    }
+  delay(20);
     
 }
