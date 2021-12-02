@@ -81,6 +81,7 @@ void setup()
     page += "}\r\n";
     page += "</script>\r\n";
     page += "</body>\r\n";
+    server.send(200,"text/html",page);
   });
 
   server.on("/open", []() {
