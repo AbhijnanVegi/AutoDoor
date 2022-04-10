@@ -20,7 +20,7 @@ times = []
 
 for item in res['m2m:cnt']['m2m:cin']:
     time = datetime.strptime(item['ct'], '%Y%m%dT%H%M%S')
-    if (datetime.now()-time).total_seconds < 3600:
+    if (datetime.now()-time).total_seconds() < 3600.0:
         values.append(int(item['con']))
         times.append(time)
 
